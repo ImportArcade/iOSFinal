@@ -6,12 +6,21 @@
 //
 
 import SwiftUI
+import FirebaseCore
+import FirebaseFirestore
+
 
 @main
-struct FinalProjectApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+struct YourApp: App {
+    @State var games = [Game]()
+    init() {
+        FirebaseApp.configure()
     }
+  var body: some Scene {
+    WindowGroup {
+      NavigationView {
+          ContentView(games: games)
+      }
+    }
+  }
 }
