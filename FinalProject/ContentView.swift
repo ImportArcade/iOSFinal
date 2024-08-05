@@ -10,27 +10,53 @@ import FirebaseCore
 import FirebaseFirestore
 
 // Reference to Firestore
+extension Color {
+    static let zeldaGreenLight = Color(red: 133/255, green: 185/255, blue: 58/255) // Light green
+    static let zeldaGreenDark = Color(red: 58/255, green: 110/255, blue: 46/255) // Dark green
+    static let zeldaGold = Color(red: 255/255, green: 215/255, blue: 0/255) // Gold
+}
+
 
 struct ContentView: View {
     @Environment(\.scenePhase) var scenePhase
     @State var games: [Game]
+    @State var dbObjects = [DbObject]()
+    @State var completedGames: [String: Bool] = [:]
     var body: some View {
-        NavigationView{
-            List(){
-                ForEach(games) {
-                    game in NavigationLink(destination: GameView(games: $games, game: game)) {
-                        Text("\(game.name)")
-                    }
-                    }
-                }
+        NavigationView {
+            List {
+                ForEach(games) { game in
+                    NavigationLink(destination: GameView(games: $games, game: game)) {
+                        HStack {
+                            Image(systemName: completedGames[game.id, default: false] ? "triangle.fill" : "triangle").foregroundColor(Color.zeldaGold)
+                            Text("\(game.name)")
+                                .foregroundColor(.zeldaGold) // Gold text color
+                                .padding()
+                                
+                            .cornerRadius(8)
+                        }.onAppear {
+                            let db = Firestore.firestore()
+                            let docRef = db.collection("gameData").document(game.id)
+                            docRef.getDocument { (document, error) in
+                                if let document = document {
+                                    let isComplete = document.data()?["IsComplete"] as? Bool ?? false
+                                    completedGames.updateValue(isComplete, forKey: game.id)
+                                }
+                            }
+                        } // Rounded corners
+                    } // Light green background
+                }.background(Color.zeldaGreenLight.ignoresSafeArea())
             }
-            .padding().onAppear{
-                Task{
+            .padding().listStyle(.inset)
+            .navigationTitle("Zelda Games") // Add a navigation title
+            .onAppear {
+                Task {
                     games = try await performAPICall()
                 }
             }
         }
     }
+}
 #Preview {
     @State var games = [Game]()
     return ContentView(games: games)
